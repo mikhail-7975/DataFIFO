@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <mutex>
+#include <map>
 
 class DataFIFO {
 public:
@@ -13,16 +14,21 @@ public:
 private:
 	std::mutex _lock;
 
+
 	size_t _bufferSize;//максимальный размер буффера
 	size_t _maxBlocksCount;//максимальное количество блоков
 	
 	void* _data;
+	std::map<size_t, size_t> _askedBlocksSize;//map с адресом блока и его размером
 
-	size_t _redyBlockCount;//количество готовых блоков, которые может получить читатель
-	size_t _usedBlocksCount;//количество использованных блоков. Нужно для проверки заполненности fifo
 	
 	size_t _freeBytesCount; //количество свободных байт
 
+	size_t _usedBlocksCount;//количество использованных блоков. Нужно для проверки заполненности fifo
 	size_t _rightBorderOfUsedBytes;
 	size_t _leftBorderOfUsedBytes;
+	
+	size_t _redyBlockCount;//количество готовых блоков, которые может получить читатель
+	size_t _rightBorderOfReadyBytes;
+	size_t _leftBorderOfReadyBytes;
 };
