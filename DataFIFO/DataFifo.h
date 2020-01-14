@@ -31,7 +31,6 @@ public:
 private:
 	std::mutex _lock;
 
-
 	size_t _bufferSize;//максимальный размер буффера
 	size_t _maxBlocks;//максимальное количество блоков
 	

@@ -73,6 +73,6 @@ void DataFIFO::addFree(void* data)
 		_leftBorder = 0;
 		_rightBorder = 0;
 	}
-	//dataInUse.erase(size_t(data));
+	dataInUse.erase(size_t(data));
 }
 
