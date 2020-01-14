@@ -1,7 +1,24 @@
 #pragma once
 #include <memory>
 #include <mutex>
+#include <vector>
 #include <map>
+
+enum class BlockState {
+	CLEAR,
+	FILLED,
+	READY,
+	INUSE
+};
+
+struct Data final {
+	Data() = default;
+	Data(Data& copy) : _ptr(copy._ptr), _size(copy._size), _state(copy._state) {};
+	Data(void* ptr, BlockState state, size_t size) : _ptr(ptr), _state(state), _size(size) {};
+	void* _ptr;
+	BlockState _state;
+	size_t _size;
+};
 
 class DataFIFO {
 public:
@@ -16,19 +33,12 @@ private:
 
 
 	size_t _bufferSize;//максимальный размер буффера
-	size_t _maxBlocksCount;//максимальное количество блоков
+	size_t _maxBlocks;//максимальное количество блоков
 	
 	void* _data;
-	std::map<size_t, size_t> _askedBlocksSize;//map с адресом блока и его размером
-
+	std::map<size_t, Data> dataMap;
 	
-	size_t _freeBytesCount; //количество свободных байт
-
-	size_t _usedBlocksCount;//количество использованных блоков. Нужно для проверки заполненности fifo
-	size_t _rightBorderOfUsedBytes;
-	size_t _leftBorderOfUsedBytes;
-	
-	size_t _redyBlockCount;//количество готовых блоков, которые может получить читатель
-	size_t _rightBorderOfReadyBytes;
-	size_t _leftBorderOfReadyBytes;
+	size_t _usedBytesCount;
+	size_t _leftBorder;
+	size_t _rightBorder;
 };

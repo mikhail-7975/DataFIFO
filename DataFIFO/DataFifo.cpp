@@ -2,15 +2,11 @@
 
 DataFIFO::DataFIFO(size_t bufferSize, size_t maxBlocksCount) {
 	_bufferSize = bufferSize;
-	_maxBlocksCount = maxBlocksCount;
+	_maxBlocks = maxBlocksCount;
 	
-	_redyBlockCount = 0;
-	_usedBlocksCount = 0;
-
-	_freeBytesCount = bufferSize;
-
-	_leftBorderOfUsedBytes = 0;
-	_rightBorderOfUsedBytes = 0;
+	_usedBytesCount = 0;
+	_leftBorder = 0;
+	_rightBorder = 0;
 
 	_data = operator new[](bufferSize);
 }
@@ -22,40 +18,55 @@ DataFIFO::~DataFIFO()
 
 void* DataFIFO::getFree(size_t size)
 {
-	if (size > _freeBytesCount)
+	if (size > _bufferSize - _usedBytesCount)
 		return nullptr;
 
 	std::lock_guard<std::mutex> guard(_lock);
-
+		
+	
 	void* result = nullptr;
-	if (_bufferSize - _rightBorderOfUsedBytes >= size) {
-		result = static_cast<char*>(_data) + _rightBorderOfUsedBytes;
-		_rightBorderOfUsedBytes = _rightBorderOfUsedBytes + size;
-		_freeBytesCount -= size;
-		_askedBlocksSize.insert(size_t(result), size);
+	if (_bufferSize - _rightBorder >= size) {
+		result = static_cast<char*>(_data) + _rightBorder;
 	} else {
-		if (size < _leftBorderOfUsedBytes) {
+		if (_leftBorder > size) {
 			result = _data;
-			//_leftBorderOfUsedBytes = _rightBorderOfUsedBytes;
-			_rightBorderOfUsedBytes = size;
-			_askedBlocksSize.insert(size_t(result), size);
+			_rightBorder = size;
 		}
 	}
+	Data d(result, BlockState::CLEAR, size);
+	dataMap.emplace(size_t(result), d);
+	//dataMap.insert(, d);
+		
+		
+		//insert(size_t(result), d);
 	return result;
 }
 
 void DataFIFO::addReady(void* data) {
 	std::lock_guard<std::mutex> guard(_lock);
-	
-	if (_askedBlocksSize.size() == 0)
-		return;
+	dataMap[size_t(data)]._state = BlockState::READY;
+}
 
-	_rightBorderOfReadyBytes = _leftBorderOfReadyBytes + _askedBlocksSize[size_t(data)];
+void* DataFIFO::getReady(size_t& size)
+{
+	std::lock_guard<std::mutex> guard(_lock);
+	void* result = nullptr;
+	if (dataMap.begin()->second._state == BlockState::READY) {
+		result = dataMap.begin()->second._ptr;
+		dataMap.begin()->second._state = BlockState::INUSE;
+	}
+	return result;
 }
 
 void DataFIFO::addFree(void* data)
 {
 	std::lock_guard<std::mutex> guard(_lock);
-	_leftBorderOfReadyBytes = _rightBorderOfReadyBytes;
+	//dataMap[size_t(data)]._state = BlockState::READY;
+	_leftBorder += dataMap.begin()->second._size;
+	if (_leftBorder == _rightBorder) {
+		_leftBorder = 0;
+		_rightBorder = 0;
+	}
+	dataMap.erase(dataMap.begin());
 }
 
