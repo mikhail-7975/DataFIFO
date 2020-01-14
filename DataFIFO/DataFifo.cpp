@@ -24,17 +24,20 @@ void* DataFIFO::getFree(size_t size)
 	std::lock_guard<std::mutex> guard(_lock);
 		
 	
-	void* result = nullptr;
+	void* result;
 	if (_bufferSize - _rightBorder >= size) {
 		result = static_cast<char*>(_data) + _rightBorder;
+		_rightBorder += size;
 	} else {
 		if (_leftBorder > size) {
 			result = _data;
 			_rightBorder = size;
+		} else {
+			return nullptr;
 		}
 	}
 	Data d(result, BlockState::CLEAR, size);
-	dataMap.emplace(size_t(result), d);
+	dataInFifo.emplace(size_t(result), d);
 	//dataMap.insert(, d);
 		
 		
@@ -44,16 +47,19 @@ void* DataFIFO::getFree(size_t size)
 
 void DataFIFO::addReady(void* data) {
 	std::lock_guard<std::mutex> guard(_lock);
-	dataMap[size_t(data)]._state = BlockState::READY;
+	dataInFifo[size_t(data)]._state = BlockState::READY;
 }
 
 void* DataFIFO::getReady(size_t& size)
 {
 	std::lock_guard<std::mutex> guard(_lock);
 	void* result = nullptr;
-	if (dataMap.begin()->second._state == BlockState::READY) {
-		result = dataMap.begin()->second._ptr;
-		dataMap.begin()->second._state = BlockState::INUSE;
+	if (dataInFifo.begin()->second._state == BlockState::READY) {
+		dataInUse.emplace(dataInFifo.begin()->first, dataInFifo.begin()->second);
+		result = dataInFifo.begin()->second._ptr;
+		dataInFifo.begin()->second._state = BlockState::INUSE;
+		size = dataInFifo.begin()->second._size;
+		dataInFifo.erase(dataInFifo.begin());
 	}
 	return result;
 }
@@ -62,11 +68,11 @@ void DataFIFO::addFree(void* data)
 {
 	std::lock_guard<std::mutex> guard(_lock);
 	//dataMap[size_t(data)]._state = BlockState::READY;
-	_leftBorder += dataMap.begin()->second._size;
+	_leftBorder += dataInUse.begin()->second._size;
 	if (_leftBorder == _rightBorder) {
 		_leftBorder = 0;
 		_rightBorder = 0;
 	}
-	dataMap.erase(dataMap.begin());
+	//dataInUse.erase(size_t(data));
 }
 

@@ -36,7 +36,8 @@ private:
 	size_t _maxBlocks;//максимальное количество блоков
 	
 	void* _data;
-	std::map<size_t, Data> dataMap;
+	std::map<size_t, Data> dataInFifo;
+	std::map<size_t, Data> dataInUse;
 	
 	size_t _usedBytesCount;
 	size_t _leftBorder;
