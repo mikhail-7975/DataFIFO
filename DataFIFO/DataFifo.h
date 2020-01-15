@@ -51,5 +51,4 @@ private:
 	std::deque<Block> _queue;
 
 	void* foundFreePlace(size_t size);
-	//size_t _dataPrtOffset;
 };
