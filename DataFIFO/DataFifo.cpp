@@ -78,6 +78,14 @@ void DataFIFO::addFree(void* data)
 	}
 }
 
+bool DataFIFO::isEmpty()
+{
+	if (bufferStateVector.size() == 1 && bufferStateVector.front()._state == BlockState::FREE)
+		return true;
+	else
+		return false;
+}
+
 void* DataFIFO::foundFreePlace(size_t size)
 {
 	void* result = nullptr;

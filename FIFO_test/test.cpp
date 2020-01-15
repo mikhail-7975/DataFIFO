@@ -269,6 +269,29 @@ TEST(SingleThread, secondUsing_2) {
 	EXPECT_EQ(*checknewdata1, 10);
 }
 
+TEST(SafetyTest, getReadyFromEmpty) {
+	DataFIFO fifo(10, 10);
+	size_t size;
+	auto data = fifo.getReady(size);
+	EXPECT_EQ(data, nullptr);
+	EXPECT_EQ(size, 0);
+}
+
+TEST(SafetyTest, addFreeNotFromFifo) {
+	int a;
+	DataFIFO fifo(10, 10); 
+	EXPECT_NO_THROW(fifo.addFree(&a));
+}
+
+TEST(SafetyTest, addFreeAlreadyFree) {
+	//int a;
+	DataFIFO fifo(10, 10);
+	int* a = static_cast<int*>(fifo.getFree(sizeof(int)));
+	fifo.addFree(a);
+	EXPECT_NO_THROW(fifo.addFree(a));
+	//EXPECT_NO_THROW(fifo.addFree(&a));
+}
+
 #include <sstream>
 #include <iostream>
 #include <fstream>
@@ -296,7 +319,7 @@ public:
 */
 
 
-void reader(DataFIFO& fifo, std::istream& in, bool& sync) {
+void writerToFifo(DataFIFO& fifo, std::istream& in, bool& sync) {
 
 	char* data = nullptr;
 	std::string str;
@@ -310,10 +333,10 @@ void reader(DataFIFO& fifo, std::istream& in, bool& sync) {
 	sync = true;
 }
 
-void writer(DataFIFO& fifo, std::ostream& out, bool& sync) {
+void readerFromFifo(DataFIFO& fifo, std::ostream& out, bool& sync) {
 
 	char* data = nullptr;
-	while (!sync /*|| !fifo.isEmpty()*/) {
+	while (/*!sync /*|| !fifo.isEmpty()*/) {
 
 		size_t size;
 		while (data == nullptr && (!sync /*|| !fifo.isEmpty()*/))
@@ -334,10 +357,10 @@ TEST(DataFifoMultiTest, FishText) {
 	DataFIFO fifo(1000, 10);
 
 	bool sync = false;
-	std::thread read(reader, std::ref(fifo), std::ref(in), std::ref(sync));
-	std::thread write(writer, std::ref(fifo), std::ref(out), std::ref(sync));
-	read.join();
-	write.join();
+	std::thread writeToFifo(writerToFifo, std::ref(fifo), std::ref(in), std::ref(sync));
+	writeToFifo.join();
+	std::thread readFromFifo(readerFromFifo, std::ref(fifo), std::ref(out), std::ref(sync));
+	readFromFifo.join();
 	out.close();
 	in.close();
 
@@ -352,8 +375,8 @@ TEST(DataFifoMultiTest, myOwnText) {
 	DataFIFO fifo(1000, 10);
 
 	bool sync = false;
-	std::thread read(reader, std::ref(fifo), std::ref(in), std::ref(sync));
-	std::thread write(writer, std::ref(fifo), std::ref(out), std::ref(sync));
+	std::thread read(writerToFifo, std::ref(fifo), std::ref(in), std::ref(sync));
+	std::thread write(readerFromFifo, std::ref(fifo), std::ref(out), std::ref(sync));
 
 	read.join();
 	write.join();
@@ -370,8 +393,8 @@ TEST(DataFifoMultiTest, empty) {
 	DataFIFO fifo(1000, 10);
 
 	bool sync = false;
-	std::thread read(reader, std::ref(fifo), std::ref(in), std::ref(sync));
-	std::thread write(writer, std::ref(fifo), std::ref(out), std::ref(sync));
+	std::thread read(writerToFifo, std::ref(fifo), std::ref(in), std::ref(sync));
+	std::thread write(readerFromFifo, std::ref(fifo), std::ref(out), std::ref(sync));
 
 	read.join();
 	write.join();
@@ -388,8 +411,8 @@ TEST(DataFifoMultiTest, fishTest2) {
 	DataFIFO fifo(1000, 10);
 
 	bool sync = false;
-	std::thread read(reader, std::ref(fifo), std::ref(in), std::ref(sync));
-	std::thread write(writer, std::ref(fifo), std::ref(out), std::ref(sync));
+	std::thread read(writerToFifo, std::ref(fifo), std::ref(in), std::ref(sync));
+	std::thread write(readerFromFifo, std::ref(fifo), std::ref(out), std::ref(sync));
 
 	read.join();
 	write.join();
