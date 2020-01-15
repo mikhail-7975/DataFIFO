@@ -3,13 +3,14 @@
 #include <mutex>
 #include <vector>
 #include <map>
+#include <list>
+#include <queue>
 
 enum class BlockState {
-	NOT_READY,
-	//FILLED,
-	READY,
-	FREE
-	//INUSE
+	READY_FOR_WRITING,
+	READY_FOR_READING,
+	FREE,
+	INUSE
 };
 
 struct Data final {
@@ -19,6 +20,14 @@ struct Data final {
 	void* _ptr;
 	BlockState _state;
 	size_t _size;
+};
+
+struct Block final {
+	size_t _size;
+	void* _ptr;
+	BlockState _state;
+public:
+	Block(size_t size, void* ptr, BlockState state) : _size(size), _ptr(ptr), _state(state) {};
 };
 
 class DataFIFO {
@@ -36,10 +45,13 @@ private:
 	size_t _maxBlocks;//максимальное количество блоков
 	
 	void* _data;
+	std::vector<bool> byteState;
 	std::map<size_t, Data> dataInFifo;
 	std::map<size_t, Data> dataInUse;
 	
-	size_t _usedBytesCount;
-	size_t _leftBorder;
-	size_t _rightBorder;
+	std::list<Block> bufferState;
+	std::deque<Block> _queue;
+
+	void* foundFreePlace(size_t size);
+	size_t _dataPrtOffset;
 };

@@ -27,7 +27,7 @@ TEST(SingleThread, checkAddres) {
 	auto checkdata2 = static_cast<int*>(intFifo.getReady(size));
 	auto checkdata3 = static_cast<int*>(intFifo.getReady(size));
 	ASSERT_NO_THROW(intFifo.addFree(data1));
-	ASSERT_NO_THROW(intFifo.addFree(data2));
+	(intFifo.addFree(data2));
 	ASSERT_NO_THROW(intFifo.addFree(data3));
 	EXPECT_EQ(checkdata1, data1);
 	EXPECT_EQ(checkdata2, data2);
@@ -115,8 +115,8 @@ TEST(SingleThread, notReadyFirst) {
 	intFifo.addReady(data2);
 	size_t size;
 	auto checkdata1 =  static_cast<char*>(intFifo.getReady(size));
-	auto checkdata2 =    static_cast<int*>(intFifo.getFree(size));
-	auto checkdata3 = static_cast<double*>(intFifo.getFree(size));
+	auto checkdata2 =    static_cast<int*>(intFifo.getReady(size));
+	auto checkdata3 = static_cast<double*>(intFifo.getReady(size));
 	EXPECT_EQ(checkdata1, nullptr);
 	EXPECT_EQ(checkdata2, nullptr);
 	EXPECT_EQ(checkdata3, nullptr);
@@ -258,12 +258,12 @@ TEST(SingleThread, secondUsing_2) {
 	//intFifo.addFree(data3);
 	(intFifo.addFree(data1));
 	(intFifo.addFree(data2));
+	EXPECT_EQ(*checkdata1, 'a');
+	EXPECT_EQ(*checkdata2, 200);
+	EXPECT_EQ(*checkdata3, 300.);
 	auto newdata1 = static_cast<int*>(intFifo.getFree(sizeof(int)));
 	*newdata1 = 10;
 	intFifo.addReady(newdata1);
 	auto checknewdata1 = static_cast<int*>(intFifo.getReady(size));
-	EXPECT_EQ(*checkdata1, 'a');
-	EXPECT_EQ(*checkdata2, 200);
-	EXPECT_EQ(*checkdata3, 300.);
 	EXPECT_EQ(*checknewdata1, 10);
 }
