@@ -305,7 +305,7 @@ TEST(SafetyTest, addFreeNullptr) {
 #include <thread>
 #include <functional>
 #include <string>
-
+#include <chrono> 
 
 #include <condition_variable>
 
@@ -325,8 +325,10 @@ public:
 */
 
 
-void writerToFifo(DataFIFO& fifo, std::istream& in, bool& sync) {
-
+void writerToFifo(DataFIFO& fifo, std::istream& in, bool& isWriterWork, bool isReaderWork) {
+	isWriterWork = true;
+	std::this_thread::sleep_for(2s);
+	//std::cout << "begin writing " << std::endl;
 	char* data = nullptr;
 	std::string str;
 	while (in >> str) {
@@ -336,22 +338,31 @@ void writerToFifo(DataFIFO& fifo, std::istream& in, bool& sync) {
 		fifo.addReady(data);
 		data = nullptr;
 	}
-	sync = true;
+	isWriterWork = false;
+	//std::cout << "end writing " << std::endl;
 }
 
-void readerFromFifo(DataFIFO& fifo, std::ostream& out, bool& sync) {
-
+void readerFromFifo(DataFIFO& fifo, std::ostream& out, bool& isWriterWork, bool isReaderWork) {
+	//std::cout << "begin reading " << std::endl;
+	while (!isWriterWork && fifo.isQueueEmpty()) {}
 	char* data = nullptr;
-	while (!fifo.isBufferEmpty()) {
+	while (!fifo.isQueueEmpty() || isWriterWork == true) {
 
 		size_t size;
-		while (data == nullptr)
+		while (data == nullptr) {
+			//std::cout << " read " << std::endl;
 			data = static_cast<char*>(fifo.getReady(size));
-		if (data != nullptr)
+			if (isWriterWork == true)
+				break;
+		}
+		if (data != nullptr) {
+			//std::cout << " out " << std::endl;
 			out << data << " ";
+		}
 		fifo.addFree(data);
 		data = nullptr;
 	}
+	//std::cout << "end reading " << std::endl;
 }
 
 
@@ -362,10 +373,11 @@ TEST(DataFifoMultiTest, FishText) {
 	ASSERT_TRUE(in.is_open());
 	DataFIFO fifo(1000, 10);
 
-	bool sync = false;
-	std::thread writeToFifo(writerToFifo, std::ref(fifo), std::ref(in), std::ref(sync));
+	bool syncWrite = false;
+	bool syncRead = false;
+	std::thread writeToFifo(writerToFifo, std::ref(fifo), std::ref(in), std::ref(syncWrite));
 	writeToFifo.join();
-	std::thread readFromFifo(readerFromFifo, std::ref(fifo), std::ref(out), std::ref(sync));
+	std::thread readFromFifo(readerFromFifo, std::ref(fifo), std::ref(out), std::ref(syncWrite));
 	readFromFifo.join();
 	out.close();
 	in.close();
