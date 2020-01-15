@@ -354,7 +354,7 @@ void writer(DataFIFO& fifo, std::ostream& out, bool& sync) {
 	}
 }
 
-
+/*
 TEST(DataFifoMultiTest, FishText) {
 
 	std::ifstream in("multiTest.txt");
@@ -371,7 +371,7 @@ TEST(DataFifoMultiTest, FishText) {
 	in.close();
 
 }
-
+*/
 
 TEST(DataFifoMultiTest, myOwnText) {
 
