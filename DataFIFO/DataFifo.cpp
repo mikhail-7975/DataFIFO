@@ -44,16 +44,12 @@ void* DataFIFO::getReady(size_t& size)
 	std::lock_guard<std::mutex> guard(_lock);
 	void* result = nullptr;
 	size = 0;
-	/*if (dataInFifo.begin()->second._state == BlockState::READY) {
-		dataInUse.emplace(dataInFifo.begin()->first, dataInFifo.begin()->second);
-		result = dataInFifo.begin()->second._ptr;
-		size = dataInFifo.begin()->second._size;
-		dataInFifo.erase(dataInFifo.begin());
-	}*/
-	if (_queue.front()._state == BlockState::READY_FOR_READING) {
-		result = _queue.front()._ptr;
-		size = _queue.front()._size;
-		_queue.pop_front();
+	if (!_queue.empty()) {
+		if (_queue.front()._state == BlockState::READY_FOR_READING) {
+			result = _queue.front()._ptr;
+			size = _queue.front()._size;
+			_queue.pop_front();
+		}
 	}
 	return result;
 }
