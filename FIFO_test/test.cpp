@@ -327,16 +327,16 @@ public:
 
 void reader(DataFIFO& fifo, std::istream& in, bool& sync) {
 
-char* data = nullptr;
-std::string str;
-while (in >> str) {
-	while (data == nullptr)
-		data = static_cast<char*>(fifo.getFree(str.size() + 1));
-	std::copy(str.c_str(), str.c_str() + str.size() + 1, data);
-	fifo.addReady(data);
-	data = nullptr;
-}
-sync = true;
+	char* data = nullptr;
+	std::string str;
+	while (in >> str) {
+		while (data == nullptr)
+			data = static_cast<char*>(fifo.getFree(str.size() + 1));
+		std::copy(str.c_str(), str.c_str() + str.size() + 1, data);
+		fifo.addReady(data);
+		data = nullptr;
+	}
+	sync = true;
 }
 
 void writer(DataFIFO& fifo, std::ostream& out, bool& sync) {
