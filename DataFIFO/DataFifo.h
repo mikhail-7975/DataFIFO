@@ -26,7 +26,6 @@ struct Block final {
 	size_t _size;
 	void* _ptr;
 	BlockState _state;
-public:
 	Block(size_t size, void* ptr, BlockState state) : _size(size), _ptr(ptr), _state(state) {};
 };
 
@@ -50,6 +49,7 @@ private:
 	std::map<size_t, Data> dataInUse;
 	
 	std::list<Block> bufferState;
+	std::vector<Block> bufferStateVector;
 	std::deque<Block> _queue;
 
 	void* foundFreePlace(size_t size);
