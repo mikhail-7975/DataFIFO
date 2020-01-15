@@ -336,10 +336,10 @@ void writerToFifo(DataFIFO& fifo, std::istream& in, bool& sync) {
 void readerFromFifo(DataFIFO& fifo, std::ostream& out, bool& sync) {
 
 	char* data = nullptr;
-	while (/*!sync /*|| !fifo.isEmpty()*/) {
+	while (!fifo.isEmpty()) {
 
 		size_t size;
-		while (data == nullptr && (!sync /*|| !fifo.isEmpty()*/))
+		while (data == nullptr)
 			data = static_cast<char*>(fifo.getReady(size));
 		if (data != nullptr)
 			out << data << " ";
@@ -363,7 +363,7 @@ TEST(DataFifoMultiTest, FishText) {
 	readFromFifo.join();
 	out.close();
 	in.close();
-
+	EXPECT_EQ(1, 1);
 }
 
 
