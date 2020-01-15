@@ -2,8 +2,8 @@
 #include <iostream>
 #include <fstream>
 
-void writerToFifo(DataFIFO& fifo, std::istream& in, bool& sync) {
-
+void writerToFifo(DataFIFO& fifo, std::istream& in, bool& isWriterWork) {
+	isWriterWork = true;
 	char* data = nullptr;
 	std::string str;
 	while (in >> str) {
@@ -13,16 +13,16 @@ void writerToFifo(DataFIFO& fifo, std::istream& in, bool& sync) {
 		fifo.addReady(data);
 		data = nullptr;
 	}
-	sync = true;
+	isWriterWork = false;
 }
 
-void readerFromFifo(DataFIFO& fifo, std::ostream& out, bool& sync) {
+void readerFromFifo(DataFIFO& fifo, std::ostream& out, bool& isWriterWork) {
 
 	char* data = nullptr;
-	while (!fifo.isEmpty()) {
+	while (!fifo.isEmpty() || isWriterWork == true) {
 
 		size_t size;
-		while (data == nullptr)
+		while (data == nullptr && isWriterWork == true)
 			data = static_cast<char*>(fifo.getReady(size));
 		if (data != nullptr)
 			out << data << " ";
@@ -39,8 +39,8 @@ int main() {
 
 	bool sync = false;
 	std::thread writeToFifo(writerToFifo, std::ref(fifo), std::ref(in), std::ref(sync));
-	writeToFifo.join();
 	std::thread readFromFifo(readerFromFifo, std::ref(fifo), std::ref(out), std::ref(sync));
+	writeToFifo.join();
 	readFromFifo.join();
 	out.close();
 	in.close();

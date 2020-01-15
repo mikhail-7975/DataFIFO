@@ -27,9 +27,9 @@ TEST(SingleThread, checkAddres) {
 	auto checkdata1 = static_cast<int*>(intFifo.getReady(size));
 	auto checkdata2 = static_cast<int*>(intFifo.getReady(size));
 	auto checkdata3 = static_cast<int*>(intFifo.getReady(size));
-	ASSERT_NO_THROW(intFifo.addFree(data1));
+	intFifo.addFree(data1);
 	ASSERT_NO_THROW(intFifo.addFree(data2));
-	ASSERT_NO_THROW(intFifo.addFree(data3));
+	(intFifo.addFree(data3));
 	EXPECT_EQ(checkdata1, data1);
 	EXPECT_EQ(checkdata2, data2);
 	EXPECT_EQ(checkdata3, data3);
@@ -290,6 +290,12 @@ TEST(SafetyTest, addFreeAlreadyFree) {
 	fifo.addFree(a);
 	EXPECT_NO_THROW(fifo.addFree(a));
 	//EXPECT_NO_THROW(fifo.addFree(&a));
+}
+
+TEST(SafetyTest, addFreeNullptr) {
+	DataFIFO fifo(10, 10);
+	//int* a = static_cast<int*>(fifo.getFree(sizeof(int)));
+	EXPECT_NO_THROW(fifo.addFree(nullptr));
 }
 
 #include <sstream>
