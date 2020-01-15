@@ -4,6 +4,7 @@
 
 void writerToFifo(DataFIFO& fifo, std::istream& in, bool& isWriterWork) {
 	isWriterWork = true;
+	//std::cout << "begin writing " << std::endl;
 	char* data = nullptr;
 	std::string str;
 	while (in >> str) {
@@ -14,21 +15,30 @@ void writerToFifo(DataFIFO& fifo, std::istream& in, bool& isWriterWork) {
 		data = nullptr;
 	}
 	isWriterWork = false;
+	//std::cout << "end writing " << std::endl;
 }
 
 void readerFromFifo(DataFIFO& fifo, std::ostream& out, bool& isWriterWork) {
-
+	//std::cout << "begin reading " << std::endl;
+	while (!isWriterWork) { std::cout << " wait... "; }
 	char* data = nullptr;
-	while (!fifo.isEmpty() || isWriterWork == true) {
+	while (!fifo.isQueueEmpty() || isWriterWork == true) {
 
 		size_t size;
-		while (data == nullptr && isWriterWork == true)
+		while (data == nullptr) {
+			//std::cout << " read " << std::endl;
 			data = static_cast<char*>(fifo.getReady(size));
-		if (data != nullptr)
+			if (isWriterWork == true)
+				break;
+		}
+		if (data != nullptr) {
+			//std::cout << " out " << std::endl;
 			out << data << " ";
+		}
 		fifo.addFree(data);
 		data = nullptr;
 	}
+	//std::cout << "end reading " << std::endl;
 }
 
 int main() {

@@ -342,7 +342,7 @@ void writerToFifo(DataFIFO& fifo, std::istream& in, bool& sync) {
 void readerFromFifo(DataFIFO& fifo, std::ostream& out, bool& sync) {
 
 	char* data = nullptr;
-	while (!fifo.isEmpty()) {
+	while (!fifo.isBufferEmpty()) {
 
 		size_t size;
 		while (data == nullptr)

@@ -56,8 +56,8 @@ void* DataFIFO::getReady(size_t& size)
 
 void DataFIFO::addFree(void* data)
 {
-	if (data == nullptr)
-		return;
+	/*if (data == nullptr)
+		return;*/
 	std::lock_guard<std::mutex> guard(_lock);
 	
 	for (size_t i = 0; i < bufferStateVector.size(); i++) {
@@ -66,11 +66,22 @@ void DataFIFO::addFree(void* data)
 			break;
 		}
 	}
+	if (isBufferEmpty())
+		return;
 
 	auto it = bufferStateVector.begin();
 	for (size_t i = 0; i < bufferStateVector.size(); i++) {
-		if (i + 1 == bufferStateVector.size())
+		if (i + 1 == bufferStateVector.size()) {
+			if (bufferStateVector[i - 1]._state == BlockState::FREE) {
+				if (bufferStateVector[i]._state == BlockState::FREE) {
+					i--;
+					bufferStateVector[i]._size += bufferStateVector[i + 1]._size;
+					//it++;
+					it = bufferStateVector.erase(it);
+				}
+			}
 			break;
+		}
 		it++;
 		if (bufferStateVector[i]._state == BlockState::FREE) {
 			if (bufferStateVector[i + 1]._state == BlockState::FREE) {
@@ -94,12 +105,17 @@ void DataFIFO::addFree(void* data)
 	}*/
 }
 
-bool DataFIFO::isEmpty()
+bool DataFIFO::isBufferEmpty()
 {
 	if (bufferStateVector.size() == 1 && bufferStateVector.front()._state == BlockState::FREE)
 		return true;
 	else
 		return false;
+}
+
+bool DataFIFO::isQueueEmpty()
+{
+	return _queue.empty();
 }
 
 void* DataFIFO::foundFreePlace(size_t size)
