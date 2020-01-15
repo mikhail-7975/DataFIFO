@@ -227,7 +227,7 @@ TEST(SingleThread, secondUsing) {
 	auto checkdata2 = static_cast<int*>(intFifo.getReady(size));
 	intFifo.addReady(data3);
 	auto checkdata3 = static_cast<double*>(intFifo.getReady(size));
-	intFifo.addFree(data3);
+	//intFifo.addFree(data3);
 	(intFifo.addFree(data1));
 	(intFifo.addFree(data2));
 	EXPECT_EQ(*checkdata1, 'a');
@@ -237,5 +237,33 @@ TEST(SingleThread, secondUsing) {
 	*newdata1 = 10;
 	intFifo.addReady(newdata1);
 	auto checknewdata1 = static_cast<int*>(intFifo.getReady(size));
+	EXPECT_EQ(*checknewdata1, 10);
+}
+
+TEST(SingleThread, secondUsing_2) {
+	DataFIFO intFifo(14, 14);
+	auto data1 = static_cast<char*>(intFifo.getFree(sizeof(char)));
+	auto data2 = static_cast<int*>(intFifo.getFree(sizeof(int)));
+	auto data3 = static_cast<double*>(intFifo.getFree(sizeof(double)));
+	*data1 = 'a';
+	*data2 = 200;
+	*data3 = 300.;
+	size_t size;
+	intFifo.addReady(data1);
+	auto checkdata1 = static_cast<char*>(intFifo.getReady(size));
+	intFifo.addReady(data2);
+	auto checkdata2 = static_cast<int*>(intFifo.getReady(size));
+	intFifo.addReady(data3);
+	auto checkdata3 = static_cast<double*>(intFifo.getReady(size));
+	//intFifo.addFree(data3);
+	(intFifo.addFree(data1));
+	(intFifo.addFree(data2));
+	auto newdata1 = static_cast<int*>(intFifo.getFree(sizeof(int)));
+	*newdata1 = 10;
+	intFifo.addReady(newdata1);
+	auto checknewdata1 = static_cast<int*>(intFifo.getReady(size));
+	EXPECT_EQ(*checkdata1, 'a');
+	EXPECT_EQ(*checkdata2, 200);
+	EXPECT_EQ(*checkdata3, 300.);
 	EXPECT_EQ(*checknewdata1, 10);
 }

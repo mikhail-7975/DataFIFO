@@ -36,7 +36,7 @@ void* DataFIFO::getFree(size_t size)
 			return nullptr;
 		}
 	}
-	Data d(result, BlockState::CLEAR, size);
+	Data d(result, BlockState::NOT_READY, size);
 	dataInFifo.emplace(size_t(result), d);
 	//dataMap.insert(, d);
 		
@@ -57,7 +57,6 @@ void* DataFIFO::getReady(size_t& size)
 	if (dataInFifo.begin()->second._state == BlockState::READY) {
 		dataInUse.emplace(dataInFifo.begin()->first, dataInFifo.begin()->second);
 		result = dataInFifo.begin()->second._ptr;
-		dataInFifo.begin()->second._state = BlockState::INUSE;
 		size = dataInFifo.begin()->second._size;
 		dataInFifo.erase(dataInFifo.begin());
 	}
@@ -68,7 +67,7 @@ void DataFIFO::addFree(void* data)
 {
 	std::lock_guard<std::mutex> guard(_lock);
 	//dataMap[size_t(data)]._state = BlockState::READY;
-	_leftBorder += dataInUse.begin()->second._size;
+	_leftBorder += dataInUse.at(size_t(data))._size;//second._size;
 	if (_leftBorder == _rightBorder) {
 		_leftBorder = 0;
 		_rightBorder = 0;

@@ -5,10 +5,11 @@
 #include <map>
 
 enum class BlockState {
-	CLEAR,
-	FILLED,
+	NOT_READY,
+	//FILLED,
 	READY,
-	INUSE
+	FREE
+	//INUSE
 };
 
 struct Data final {
