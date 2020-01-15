@@ -9,6 +9,7 @@ TEST(SingleThread, oneBlock) {
 	size_t size;
 
 	auto checkdata1 = static_cast<int*>(intFifo.getReady(size));
+	intFifo.addFree(data1);
 	ASSERT_NO_THROW(intFifo.addFree(data1));
 	EXPECT_EQ(*checkdata1, 100);
 	EXPECT_EQ(size, sizeof(int));
@@ -27,7 +28,7 @@ TEST(SingleThread, checkAddres) {
 	auto checkdata2 = static_cast<int*>(intFifo.getReady(size));
 	auto checkdata3 = static_cast<int*>(intFifo.getReady(size));
 	ASSERT_NO_THROW(intFifo.addFree(data1));
-	(intFifo.addFree(data2));
+	ASSERT_NO_THROW(intFifo.addFree(data2));
 	ASSERT_NO_THROW(intFifo.addFree(data3));
 	EXPECT_EQ(checkdata1, data1);
 	EXPECT_EQ(checkdata2, data2);
@@ -256,8 +257,8 @@ TEST(SingleThread, secondUsing_2) {
 	intFifo.addReady(data3);
 	auto checkdata3 = static_cast<double*>(intFifo.getReady(size));
 	//intFifo.addFree(data3);
-	(intFifo.addFree(data1));
-	(intFifo.addFree(data2));
+	ASSERT_NO_THROW(intFifo.addFree(data1));
+	ASSERT_NO_THROW(intFifo.addFree(data2));
 	EXPECT_EQ(*checkdata1, 'a');
 	EXPECT_EQ(*checkdata2, 200);
 	EXPECT_EQ(*checkdata3, 300.);
