@@ -1,8 +1,5 @@
 #include "DataFifo.h"
 
-#define EMPTY false 
-#define FILLED true 
-
 DataFIFO::DataFIFO(size_t bufferSize, size_t maxBlocksCount) {
 	_bufferSize = bufferSize;
 	_maxBlocks = maxBlocksCount;
