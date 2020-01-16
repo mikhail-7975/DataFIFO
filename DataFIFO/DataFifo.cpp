@@ -37,7 +37,6 @@ void DataFIFO::addReady(void* data) {
 
 void* DataFIFO::getReady(size_t& size)
 {
-	std::lock_guard<std::mutex> guard(_lock);
 	void* result = nullptr;
 	size = 0;
 	if (!_queue.empty()) {
