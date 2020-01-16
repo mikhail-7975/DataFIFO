@@ -1,6 +1,9 @@
 #include "gtest/gtest.h"
 #include "../DataFIFO/DataFifo.h"
 
+#include <sstream>
+#include <thread>
+#include <string> 
 TEST(SingleThread, oneBlock) {
 	DataFIFO intFifo(sizeof(int) * 1, sizeof(int));
 	auto data1 = static_cast<int*>(intFifo.getFree(sizeof(int)));
@@ -298,16 +301,9 @@ TEST(SafetyTest, addFreeNullptr) {
 	EXPECT_NO_THROW(fifo.addFree(nullptr));
 }
 
-#include <sstream>
-#include <iostream>
-#include <fstream>
-#include <memory>
-#include <thread>
-#include <functional>
-#include <string>
-#include <chrono> 
 
-#include <condition_variable>
+
+//#include <condition_variable>
 
 /*
 class DataFifoMultiTest : public ::testing::Test {
