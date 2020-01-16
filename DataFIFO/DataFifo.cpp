@@ -7,7 +7,7 @@ DataFIFO::DataFIFO(size_t bufferSize, size_t maxBlocksCount) {
 	_bufferSize = bufferSize;
 	_maxBlocks = maxBlocksCount;
 	_data = operator new[](bufferSize);
-	bufferStateVector.push_back(Block::Block(bufferSize, _data, BlockState::FREE));
+	bufferStateList.push_back(Block::Block(bufferSize, _data, BlockState::FREE));
 }
 
 DataFIFO::~DataFIFO()
@@ -54,40 +54,36 @@ void DataFIFO::addFree(void* data)
 {
 	std::lock_guard<std::mutex> guard(_lock);
 	
-	for (size_t i = 0; i < bufferStateVector.size(); i++) {
-		if (bufferStateVector[i]._ptr == data) {
-			bufferStateVector[i]._state = BlockState::FREE;
+	for (auto &it: bufferStateList) {
+		if (it._ptr == data) {
+			it._state = BlockState::FREE;
 			break;
 		}
 	}
 	if (isBufferEmpty())
 		return;
 
-	auto it = bufferStateVector.begin();
-	for (size_t i = 0; i < bufferStateVector.size(); i++) {
-		if (i + 1 == bufferStateVector.size()) {
-			if (bufferStateVector[i - 1]._state == BlockState::FREE) {
-				if (bufferStateVector[i]._state == BlockState::FREE) {
-					i--;
-					bufferStateVector[i]._size += bufferStateVector[i + 1]._size;
-					it = bufferStateVector.erase(it);
-				}
+	auto it = bufferStateList.begin();
+	while ( it != bufferStateList.end() && bufferStateList.size() != 1) {
+		if (it->_state == BlockState::FREE) {
+			it++;
+			if (it == bufferStateList.end())
+				break;
+			if (it->_state == BlockState::FREE) {
+				size_t nextSize = it->_size;
+				it = bufferStateList.erase(it);
+				it--;
+				it->_size += nextSize;
 			}
-			break;
-		}
-		it++;
-		if (bufferStateVector[i]._state == BlockState::FREE) {
-			if (bufferStateVector[i + 1]._state == BlockState::FREE) {
-				bufferStateVector[i]._size += bufferStateVector[i + 1]._size;
-				it = bufferStateVector.erase(it);
-			}
+		} else {
+			it++;
 		}
 	}
 }
 
 bool DataFIFO::isBufferEmpty()
 {
-	if (bufferStateVector.size() == 1 && bufferStateVector.front()._state == BlockState::FREE)
+	if (bufferStateList.size() == 1 && bufferStateList.front()._state == BlockState::FREE)
 		return true;
 	else
 		return false;
@@ -102,15 +98,15 @@ void* DataFIFO::foundFreePlace(size_t size)
 {
 	void* result = nullptr;
 	size_t offset = 0;
-	for (auto it = bufferStateVector.begin(); it != bufferStateVector.end(); it++) {
+	for (auto it = bufferStateList.begin(); it != bufferStateList.end(); it++) {
 		if (it->_size >= size && it->_state == BlockState::FREE) {
 			result = static_cast<char*>(_data) + offset;
-			it = bufferStateVector.insert(it, Block::Block(size, result, BlockState::INUSE));
+			it = bufferStateList.insert(it, Block::Block(size, result, BlockState::INUSE));
 			it++;
 			it->_ptr = static_cast<char*>(_data) + offset + size;
 			it->_size -= size;
 			if (it->_size == 0)
-				bufferStateVector.erase(it);
+				bufferStateList.erase(it);
 			break;
 		}
 		offset += it->_size;

@@ -47,7 +47,7 @@ private:
 	
 	void* _data;
 	
-	std::vector<Block> bufferStateVector;
+	std::list<Block> bufferStateList;
 	std::deque<Block> _queue;
 
 	void* foundFreePlace(size_t size);
