@@ -29,7 +29,7 @@ struct Block final {
 	Block(size_t size, void* ptr, BlockState state) : _size(size), _ptr(ptr), _state(state) {};
 };
 
-class DataFIFO {
+class DataFIFO final {
 public:
 	DataFIFO(size_t bufferSize, size_t maxBlocksCount); //выделяет буфер данных заданного размера, с максимальным количеством блоков.
 	~DataFIFO();//деструктор, освобождает память

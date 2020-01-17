@@ -297,31 +297,11 @@ TEST(SafetyTest, addFreeAlreadyFree) {
 
 TEST(SafetyTest, addFreeNullptr) {
 	DataFIFO fifo(10, 10);
-	//int* a = static_cast<int*>(fifo.getFree(sizeof(int)));
 	EXPECT_NO_THROW(fifo.addFree(nullptr));
 }
 
 
-
-//#include <condition_variable>
-
-/*
-class DataFifoMultiTest : public ::testing::Test {
-public:
-	virtual void SetUp(void) {
-		_CrtMemCheckpoint(&startup);
-	}
-	virtual void TearDown(void) {
-		_CrtMemState teardown, diff;
-		_CrtMemCheckpoint(&teardown);
-		ASSERT_EQ(0, _CrtMemDifference(&diff, &startup, &teardown)) << "Memory leaks detected";
-	}
-	_CrtMemState startup;
-};
-*/
-
-
-void reader(DataFIFO& fifo, std::istream& in, bool& sync) {
+void writerInFifo(DataFIFO& fifo, std::istream& in, bool& sync) {
 
 	char* data = nullptr;
 	std::string str;
@@ -335,7 +315,7 @@ void reader(DataFIFO& fifo, std::istream& in, bool& sync) {
 	sync = true;
 }
 
-void writer(DataFIFO& fifo, std::ostream& out, bool& sync) {
+void readerFromFifo(DataFIFO& fifo, std::ostream& out, bool& sync) {
 
 	char* data = nullptr;
 	while (!sync || !fifo.isQueueEmpty()) {
@@ -369,19 +349,19 @@ TEST(DataFifoMultiTest, FishText) {
 }
 */
 
-TEST(DataFifoMultiTest, myOwnText) {
+TEST(DataFifoMultiTest, parallelThreads) {
 	std::string str("Object - oriented programming(OOP) is a programming paradigm based on the concept of objects, which can contain data, in the form of fields(often known as attributes or properties), and code, in the form of procedures(often known as methods).A feature of objects is an object's procedures that can access and often modify the data fields of the object with which they are associated (objects have a notion of this or self). In OOP, computer programs are designed by making them out of objects that interact with one another.[1][2] OOP languages are diverse, but the most popular ones are class-based, meaning that objects are instances of classes, which also determine their types. ");
 	std::istringstream in(str);
 	std::ostringstream out;
 
-	DataFIFO fifo(1000, 100);
+	DataFIFO fifo(1000, 1000);
 
 	bool sync = false;
-	std::thread read(reader, std::ref(fifo), std::ref(in), std::ref(sync));
-	std::thread write(writer, std::ref(fifo), std::ref(out), std::ref(sync));
+	std::thread writer(writerInFifo, std::ref(fifo), std::ref(in), std::ref(sync));
+	std::thread reader(readerFromFifo, std::ref(fifo), std::ref(out), std::ref(sync));
 
-	read.join();
-	write.join();
+	writer.join();
+	reader.join();
 
 	EXPECT_EQ(out.str(), str);
 }
@@ -392,11 +372,11 @@ TEST(DataFifoMultiTest, empty) {
 	std::istringstream in("");
 	std::ostringstream out;
 
-	DataFIFO fifo(1000, 10);
+	DataFIFO fifo(1000, 1000);
 
 	bool sync = false;
-	std::thread read(reader, std::ref(fifo), std::ref(in), std::ref(sync));
-	std::thread write(writer, std::ref(fifo), std::ref(out), std::ref(sync));
+	std::thread read(writerInFifo, std::ref(fifo), std::ref(in), std::ref(sync));
+	std::thread write(readerFromFifo, std::ref(fifo), std::ref(out), std::ref(sync));
 
 	read.join();
 	write.join();
@@ -405,19 +385,19 @@ TEST(DataFifoMultiTest, empty) {
 }
 
 
-TEST(DataFifoMultiTest, fishTest2) {
-
-	std::istringstream in("Nam posuere vulputate est, vitae pellentesque ante. Sed vitae dolor vitae justo hendrerit faucibus laoreet commodo diam. ");
+TEST(DataFifoMultiTest, consistentlyThread) {
+	std::string str("Object - oriented programming(OOP) is a programming paradigm based on the concept of objects, which can contain data, in the form of fields(often known as attributes or properties), and code, in the form of procedures(often known as methods).A feature of objects is an object's procedures that can access and often modify the data fields of the object with which they are associated (objects have a notion of this or self). In OOP, computer programs are designed by making them out of objects that interact with one another.[1][2] OOP languages are diverse, but the most popular ones are class-based, meaning that objects are instances of classes, which also determine their types. ");
+	std::istringstream in(str);
 	std::ostringstream out;
 
-	DataFIFO fifo(1000, 10);
+	DataFIFO fifo(1000, 1000);
 
 	bool sync = false;
-	std::thread read(reader, std::ref(fifo), std::ref(in), std::ref(sync));
-	std::thread write(writer, std::ref(fifo), std::ref(out), std::ref(sync));
+	std::thread writer(writerInFifo, std::ref(fifo), std::ref(in), std::ref(sync));
+	writer.join();
 
-	read.join();
-	write.join();
+	std::thread reader(readerFromFifo, std::ref(fifo), std::ref(out), std::ref(sync));
+	reader.join();
 
-	ASSERT_TRUE(out.str() == "Nam posuere vulputate est, vitae pellentesque ante. Sed vitae dolor vitae justo hendrerit faucibus laoreet commodo diam. ");
+	EXPECT_EQ(out.str(), str);
 }
